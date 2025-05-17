@@ -1,0 +1,212 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// ---------- Base Class ----------
+class Person {
+protected:
+    string name, ID;
+    int age;
+
+public:
+    Person(string n = "", int a = 0, string id = "") : name(n), age(a), ID(id) {}
+    virtual ~Person() {}
+
+    virtual void displayDetails() const {
+        cout << "Name: " << name << ", Age: " << age << ", ID: " << ID << endl;
+    }
+
+    virtual double calculatePayment() const {
+        return 0.0;
+    }
+};
+
+// ---------- Student Hierarchy ----------
+class Student : public Person {
+protected:
+    string program;
+
+public:
+    Student(string n, int a, string id, string prog)
+        : Person(n, a, id), program(prog) {}
+
+    void displayDetails() const override {
+        Person::displayDetails();
+        cout << "Program: " << program << endl;
+    }
+};
+
+class UndergraduateStudent : public Student {
+    string major, minor, graduationDate;
+
+public:
+    UndergraduateStudent(string n, int a, string id, string prog,
+                         string maj, string min, string grad)
+        : Student(n, a, id, prog), major(maj), minor(min), graduationDate(grad) {}
+
+    void displayDetails() const override {
+        Student::displayDetails();
+        cout << "Major: " << major << ", Minor: " << minor
+             << ", Graduation Date: " << graduationDate << endl;
+    }
+
+    double calculatePayment() const override {
+        return 40000;
+    }
+};
+
+class GraduateStudent : public Student {
+    string researchTopic, advisor, thesisTitle;
+    bool hasAssistantship;
+
+public:
+    GraduateStudent(string n, int a, string id, string prog,
+                    string topic, string adv, string thesis, bool assist = false)
+        : Student(n, a, id, prog), researchTopic(topic), advisor(adv),
+          thesisTitle(thesis), hasAssistantship(assist) {}
+
+    void displayDetails() const override {
+        Student::displayDetails();
+        cout << "Research: " << researchTopic << ", Advisor: " << advisor
+             << ", Thesis: " << thesisTitle << ", Assistantship: " << (hasAssistantship ? "Yes" : "No") << endl;
+    }
+
+    double calculatePayment() const override {
+        return hasAssistantship ? 0 : 50000;
+    }
+};
+
+// ---------- Professor Hierarchy ----------
+class Professor : public Person {
+protected:
+    string department;
+    int yearsOfService;
+
+public:
+    Professor(string n, int a, string id, string dept, int yrs)
+        : Person(n, a, id), department(dept), yearsOfService(yrs) {}
+
+    void displayDetails() const override {
+        Person::displayDetails();
+        cout << "Department: " << department << ", Years of Service: " << yearsOfService << endl;
+    }
+
+    virtual double getBaseSalary() const { return 80000; }
+
+    double calculatePayment() const override {
+        return getBaseSalary() + 1000 * yearsOfService;
+    }
+};
+
+class AssistantProfessor : public Professor {
+public:
+    AssistantProfessor(string n, int a, string id, string dept, int yrs)
+        : Professor(n, a, id, dept, yrs) {}
+
+    double getBaseSalary() const override { return 60000; }
+};
+
+class AssociateProfessor : public Professor {
+public:
+    AssociateProfessor(string n, int a, string id, string dept, int yrs)
+        : Professor(n, a, id, dept, yrs) {}
+
+    double getBaseSalary() const override { return 80000; }
+};
+
+class FullProfessor : public Professor {
+    double researchGrant;
+
+public:
+    FullProfessor(string n, int a, string id, string dept, int yrs, double grant)
+        : Professor(n, a, id, dept, yrs), researchGrant(grant) {}
+
+    double getBaseSalary() const override { return 100000; }
+
+    double calculatePayment() const override {
+        return getBaseSalary() + 1500 * yearsOfService + researchGrant;
+    }
+};
+
+// ---------- Course & Department ----------
+class Course {
+    string title;
+    Professor* instructor;
+
+public:
+    Course(string t, Professor* p) : title(t), instructor(p) {}
+
+    void displayCourse() const {
+        cout << "Course: " << title << ", Taught by: ";
+        if (instructor) instructor->displayDetails();
+    }
+};
+
+class Department {
+    string name;
+    vector<Professor*> faculty;
+
+public:
+    Department(string n) : name(n) {}
+
+    void addProfessor(Professor* p) {
+        faculty.push_back(p);
+    }
+
+    void listProfessors() const {
+        cout << "Department: " << name << " Faculty:\n";
+        for (const auto& prof : faculty)
+            prof->displayDetails();
+    }
+};
+
+// ---------- University ----------
+class University {
+    vector<Department> departments;
+
+public:
+    void addDepartment(const Department& d) {
+        departments.push_back(d);
+    }
+
+    void displayUniversity() const {
+        for (const auto& dept : departments)
+            dept.listProfessors();
+    }
+};
+
+// ---------- Main ----------
+int main() {
+    UndergraduateStudent u1("Alice", 20, "UG01", "CS", "CS", "Math", "2026");
+    GraduateStudent g1("Bob", 24, "PG01", "ECE", "AI in Robotics", "Dr. Smith", "AI and Ethics", true);
+
+    AssistantProfessor ap("Dr. Khan", 35, "P01", "CS", 5);
+    AssociateProfessor asp("Dr. Jane", 45, "P02", "ECE", 10);
+    FullProfessor fp("Dr. Einstein", 60, "P03", "Physics", 20, 50000);
+
+    Department cs("Computer Science");
+    cs.addProfessor(&ap);
+    cs.addProfessor(&fp);
+
+    Course c1("OOP in C++", &ap);
+
+    University u;
+    u.addDepartment(cs);
+
+    cout << "\n--- Student Info ---\n";
+    u1.displayDetails();
+    g1.displayDetails();
+
+    cout << "\n--- Professor Info ---\n";
+    ap.displayDetails();
+    asp.displayDetails();
+    fp.displayDetails();
+
+    cout << "\n--- Course Info ---\n";
+    c1.displayCourse();
+
+    cout << "\n--- University Info ---\n";
+    u.displayUniversity();
+
+    return 0;
+}

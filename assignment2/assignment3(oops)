@@ -1,0 +1,838 @@
+#include<iostream>
+#include <vector>
+#include <string>
+#include<memory> //for smart pointers
+
+using namespace std;
+
+class Person {
+    string name;
+    string ID;
+    int contact_information;
+    int age;
+
+public:
+    Person(const string& name, const string& ID, int contact_information, int age)
+        : name(name), ID(ID), contact_information(contact_information), age(age) {}
+
+    virtual ~Person() {}
+
+    virtual void displayDetails() const {
+        cout << "Name: " << name << ", ID: " << ID << ", Contact: " << contact_information << ", Age: " << age << endl; //Method to override in child classes
+    }
+
+    virtual double calculatePayment() const { //Method to override in child classes
+        return 0.0;
+    }
+    
+    virtual string getRole() const { //New method for overriding in Student and Professor child classes
+        return "Person";
+    }
+    
+    virtual string getIDCardInfo() const { //New method for overriding in Student and Professor child classes
+    return "Name: " + name + ", ID: " + ID;
+}
+
+    string getName() const { return name; }
+    string getID() const { return ID; }
+    int getContactInfo() const { return contact_information; }
+    int getAge() const { return age; }
+
+    bool setName(const string& newName){
+        if (newName.empty()) return false;
+        name = newName;
+        return true;
+    }
+
+    bool setAge(int newAge) {
+        if (newAge <= 0 || newAge > 150) return false;
+        age = newAge;
+        return true;
+    }
+};
+  class Student : public Person {
+    string enrollment_date;
+    string program;
+    double CGPA;
+    vector<Course*> courses; // Aggregation
+
+public:
+    Student(const string& name, const string& ID, int contact_info, int age,
+            const string& enrollment_date, const string& program, double CGPA)
+        : Person(name, ID, contact_info, age),
+          enrollment_date(enrollment_date), program(program), CGPA(CGPA) {}
+
+    ~Student() {}
+
+    virtual void displayDetails() const override {  //overridden method from Person class and the method will be overriden in more subclasses of Student
+        Person::displayDetails();
+        cout << "Enrollment Date: " << enrollment_date << ", Program: " << program << ", CGPA: " << CGPA << endl;
+    }
+
+    virtual double calculatePayment() const override {
+        return 1000.0; // default tuition fee, to be overridden by subclasses
+    }
+    
+    string getRole() const override { //overridden method from Person class
+        return "Student";
+    }
+    
+    string getIDCardInfo() const override {  //overridden method from Person class
+    return Person::getIDCardInfo() + ", Role: Student, Program: " + program;
+
+}
+
+    string getEnrollmentDate() const { return enrollment_date; }
+    string getProgram() const { return program; }
+    double getCGPA() const { return CGPA; }
+
+    bool setProgram(const string& newProgram) {
+        if (newProgram.empty()) return false;
+        program = newProgram;
+        return true;
+    }
+
+    bool setCGPA(double newCGPA) {
+        if (newCGPA < 0.0 || newCGPA > 4.0) return false;
+        CGPA = newCGPA;
+        return true;
+    }
+
+    void enrollInCourse(Course* course) { //for Aggregation
+        courses.push_back(course);
+    }
+
+    vector<Course*> getCourses() const {
+        return courses;
+    }
+};
+
+class Professor : public Person {
+    string department;
+    string specialization;
+    string hire_date;
+
+public:
+    Professor(const string& name, const string& ID, int contact_info, int age,
+              const string& department, const string& specialization, const string& hire_date)
+        : Person(name, ID, contact_info, age),
+          department(department), specialization(specialization), hire_date(hire_date) {}
+
+    ~Professor() {}
+
+    // Getters
+    string getDepartment() const {
+         return department;
+    }
+    string getSpecialization() const {
+         return specialization;
+    }
+    string getHireDate() const {
+         return hire_date;
+    }
+
+    // Setters
+    bool setDepartment(const string& dept) {
+        if (dept.empty()) {
+            return false;
+        }
+        department=dept;
+        return true;
+    }
+
+    bool setSpecialization(const string& spec) {
+        if (spec.empty()){
+            return false;
+        }
+        specialization=spec;
+        return true;
+    }
+
+    void displayDetails() const override {  //overidden method from Person class
+        Person::displayDetails();
+        cout << "Department: " << department
+             << "\nSpecialization: " << specialization
+             << "\nHire Date: " << hire_date << endl;
+    }
+
+    double calculatePayment() const override { //overidden method from Person class
+        // Example: Fixed salary
+        return 80000.0;
+    }
+    
+     string getRole() const override { //overridden method from Person class
+        return "Professor";
+    }
+    
+    string getIDCardInfo() const override { //overridden method from Person class
+    return Person::getIDCardInfo() + ", Role: Student, Program: " + program;
+
+}
+
+
+
+};
+
+class Course //Forward Declaration
+class Classroom {
+private:
+    string roomNumber;
+    int capacity;
+    vector<Course*> scheduledCourses;  // Courses scheduled in this room
+
+public:
+    Classroom(const string& roomNumber, int capacity)
+        : roomNumber(roomNumber), capacity(capacity) {}
+
+    void addCourse(Course* course) {
+        scheduledCourses.push_back(course);
+    }
+
+    string getRoomNumber() const { return roomNumber; }
+    int getCapacity() const { return capacity; }
+
+    void displayClassroomInfo() const {
+        cout << "Room Number: " << roomNumber << ", Capacity: " << capacity << endl;
+        cout << "Scheduled Courses:\n";
+        for (const auto& course : scheduledCourses) {
+            cout << " - " << course->getCourseCode() << ": " << course->getCourseName() << endl;
+        }
+    }
+};
+
+class Course {
+    string code;
+    string title;
+    string description;
+    double credits;
+    Professor* instructor = nullptr; // Aggregation
+    Classroom* classroom = nullptr; //for linking classroom class with course using Aggregation
+
+public:
+    Course(const string& code, const string& title, const string& description, double credits)
+        : code(code), title(title), description(description), credits(credits) {}
+
+    ~Course() {}
+
+    // Getters
+    string getCode() const {
+        return code;
+    }
+    string getTitle() const {
+        return title;
+    }
+    string getDescription() const {
+        return description;
+    }
+    double getCredits() const {
+        return credits;
+    }
+
+    // Setters
+    bool setTitle(const string& newTitle) {
+        if (newTitle.empty()) {
+            return false;
+        }
+        title=newTitle;
+        return true;
+    }
+
+    bool setCredits(double newCredits) {
+        if (newCredits <= 0.0) {
+            return false;
+        }
+        credits=newCredits;
+        return true;
+    }
+
+    void assignInstructor(Professor* prof) {  // for Aggregation to link professor class with course
+        instructor = prof;
+    }
+
+    Professor* getInstructor() const {
+        return instructor;
+    }
+
+     void assignClassroom(Classroom* room) {  // Aggregation for linking classroom class with course
+        classroom = room;
+    }
+
+    Classroom* getClassroom() const {
+        return classroom;
+
+    }
+
+void displayCourseInfo() const {
+    cout << "Course Code: " << code << "\n";
+    cout << "Title: " << title << "\n";
+    cout << "Description: " << description << "\n";
+    cout << "Credits: " << credits << "\n";
+
+    if (instructor) {
+        cout << "Instructor: " << instructor->getName() << "\n";
+    } else {
+        cout << "Instructor: Not assigned\n";
+    }
+
+    if (classroom) {
+        cout << "Classroom: " << classroom->getRoomNumber()
+             << ", Capacity: " << classroom->getCapacity() << "\n";
+    } else {
+        cout << "Classroom: Not assigned\n";
+    }
+
+    cout << "----------------------------------\n";
+}
+
+};
+
+class Department {
+    string name;
+    string location;
+    long long budget;
+    vector<Professor> professors; // Composition
+
+public:
+    Department(const string& name, const string& location, long long budget)
+        : name(name), location(location), budget(budget) {}
+
+    ~Department() {}
+
+    // Getters
+    string getName() const {
+        return name;
+    }
+    string getLocation() const {
+        return location;
+    }
+    long long getBudget() const {
+        return budget;
+    }
+
+    // Setters
+    bool setName(const string& newName) {
+        if (newName.empty()) {
+            return false;
+        }
+        name=newName;
+        return true;
+    }
+
+    void addProfessor(const Professor& prof) {  //for composition
+        professors.push_back(prof);
+    }
+
+    vector<Professor>& getProfessors() {
+        return professors;
+    }
+};
+
+class GradeBook {
+    string courseCode;
+    vector<string> studentIDs;
+    vector<double> grades;
+
+public:
+    //Constructor
+    GradeBook(const string& courseCode,
+              const vector<string>& studentIDs,
+              const vector<double>& grades)
+        : courseCode(courseCode), studentIDs(studentIDs), grades(grades) {}
+
+    ~GradeBook() {}
+
+
+    //Getters
+    vector<string> getStudentIDs() const {
+        return studentIDs;
+    }
+
+    vector<double> getGrades() const {
+        return grades;
+    }
+
+    //Setter Validation and setting the grade in the Vector
+    bool setGrade(const string& studentID, double grade) {
+        if (studentID.empty() || grade<0.0 || grade>4.0) {
+            return false;
+        }
+
+        for (size_t i=0; i<studentIDs.size();i++) {
+            if (studentIDs[i]==studentID){
+                grades[i]=grade;
+                return true;
+            }
+        }
+
+        studentIDs.push_back(studentID);
+        grades.push_back(grade);
+        return true;
+    }
+
+    double getGrade(const string& studentID) const{
+        for (size_t i=0; i<studentIDs.size(); i++) {
+            if (studentIDs[i]==studentID){
+                return grades[i];
+            }
+        }
+        return -1.0;
+    }
+
+    bool removeStudent(const string& studentID) {
+        for (size_t i = 0; i < studentIDs.size(); ++i) {
+            if (studentIDs[i] == studentID) {
+                studentIDs.erase(studentIDs.begin() + i);
+                grades.erase(grades.begin() + i);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool hasStudent(const string& studentID) const{
+        for (const string& id : studentIDs) {
+            if (id==studentID){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    //Calculating Average Grade
+    double calculateAverageGrade() const{
+        if(grades.empty()){
+            return 0.0;
+        }
+        double total=0.0;
+        for (double g : grades){
+                total+=g;
+        }
+        return total/grades.size();
+    }
+
+    //Calculating Highest Grade
+    double getHighestGrade() const{
+        if (grades.empty()){
+                return 0.0;
+        }
+        double maxGrade=grades[0];
+        for (double g : grades) {
+            if (g>maxGrade){
+                maxGrade=g;
+            }
+        }
+        return maxGrade;
+    }
+    //method to return a vector of failing students
+    vector<string> getFailingStudents() const {
+        vector<string> failing;
+        for (size_t i=0; i<grades.size(); i++) {
+            if (grades[i]<2.0){
+                failing.push_back(studentIDs[i]);
+            }
+        }
+        return failing;
+    }
+};
+
+//Enrollment Management Class
+
+class EnrollmentManager {
+
+    vector<string> courseCodes;
+    vector<string> studentIDs;
+    vector<vector<bool>> enrollmentTable; //2D Matrix for students x courses
+
+public:
+    //Constructor
+    EnrollmentManager(const vector<string>& students,
+                      const vector<string>& courses)
+        : studentIDs(students), courseCodes(courses)
+    {
+       //Resizing the enrollment table
+        enrollmentTable.resize(studentIDs.size(),vector<bool>(courseCodes.size(), false));
+    }
+
+    ~EnrollmentManager() {}
+
+    int findIndex(const vector<string>& vec, const string& target) {
+    for (size_t i=0; i<vec.size();i++){
+        if (vec[i]==target) {
+            return i;
+        }
+    }
+    return -1; // Not found
+}
+
+
+    //Enrolling a student in the course
+    bool enrollStudent(const string& studentID, const string& courseCode) {
+        int sid = findIndex(studentIDs,studentID);
+        int cid = findIndex(courseCodes,courseCode);
+
+        if (sid==-1 || cid==-1){
+                return false;
+        }
+        if (enrollmentTable[sid][cid]) return false;
+        enrollmentTable[sid][cid]=true;
+        return true;
+    }
+
+    //Dropping a Student from a course
+    bool dropStudent(const string& studentID, const string& courseCode) {
+        int sid=findIndex(studentIDs,studentID);
+        int cid=findIndex(courseCodes,courseCode);
+
+        if (sid==-1 || cid==-1 || !enrollmentTable[sid][cid])return false;
+
+        enrollmentTable[sid][cid]=false;
+        return true;
+    }
+
+    //Checking if the student is already enrolled
+    bool isEnrolled(const string& studentID, const string& courseCode) const {
+        int sid=findIndex(studentIDs,studentID);
+        int cid=findIndex(courseCodes,courseCode);
+
+        return (sid!=-1 && cid!=-1 && enrollmentTable[sid][cid]);
+    }
+
+    //Counting the number of Students in a course
+    int getEnrollmentCount(const string& courseCode) const {
+        int cid=findIndex(courseCodes,courseCode);
+        if (cid==-1) {
+                return 0;
+        }
+        int count=0;
+        for (size_t i=0; i<studentIDs.size(); i++) {
+            if (enrollmentTable[i][cid]) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+
+};
+// Derived classes for Student and Professor specializations
+
+// UndergraduateStudent inherits from Student
+class UndergraduateStudent : public Student {
+    string major;
+    string minor;
+    string expected_graduation_date;
+
+public:
+    UndergraduateStudent(const string& name, const string& ID, int contact_info, int age,
+                         const string& enrollment_date, const string& program, double CGPA,
+                         const string& major, const string& minor, const string& graduation_date)
+        : Student(name, ID, contact_info, age, enrollment_date, program, CGPA),
+          major(major), minor(minor), expected_graduation_date(graduation_date) {}
+
+    void displayDetails() const override {
+        Student::displayDetails();
+        cout << "Major: " << major
+             << "\nMinor: " << minor
+             << "\nExpected Graduation Date: " << expected_graduation_date << endl;
+    }
+
+    double calculatePayment() const override {
+        double baseTuition = 40000; // Base tuition fee for undergraduates
+        double scholarship = (getCGPA() > 3.5) ? 0.25 : 0.0; // 25% scholarship for high CGPA
+        return baseTuition * (1 - scholarship);
+    }
+};
+
+
+// GraduateStudent inherits from Student
+class GraduateStudent : public Student {
+    string research_topic;
+    Professor* advisor; // Aggregation
+    string thesis_title;
+
+    // New members to track assistantships
+    bool hasTeachingAssistantship;
+    bool hasResearchAssistantship;
+
+public:
+    GraduateStudent(const string& name, const string& ID, int contact_info, int age,
+                    const string& enrollment_date, const string& program, double CGPA,
+                    const string& research_topic, const string& thesis_title,
+                    Professor* advisor,
+                    bool hasTA = false, bool hasRA = false)
+        : Student(name, ID, contact_info, age, enrollment_date, program, CGPA),
+          research_topic(research_topic),
+          advisor(advisor),
+          thesis_title(thesis_title),
+          hasTeachingAssistantship(hasTA),
+          hasResearchAssistantship(hasRA) {}
+
+    void displayDetails() const override {
+        Student::displayDetails();
+        cout << "Research Topic: " << research_topic
+             << "\nThesis Title: " << thesis_title
+             << "\nAdvisor: " << (advisor ? advisor->getName() : "None")
+             << "\nTeaching Assistantship: " << (hasTeachingAssistantship ? "Yes" : "No")
+             << "\nResearch Assistantship: " << (hasResearchAssistantship ? "Yes" : "No")
+             << endl;
+    }
+
+    double calculatePayment() const override {
+        double baseTuition = 60000;
+        double scholarship = (getCGPA() > 3.7) ? 0.3 : 0.0; // 30% scholarship
+
+        double adjustedTuition = baseTuition * (1 - scholarship);
+
+        // Assistantship stipends (assume 10 months)
+        double taStipend = hasTeachingAssistantship ? 10000 * 10 : 0;
+        double raStipend = hasResearchAssistantship ? 12000 * 10 : 0;
+
+        return adjustedTuition - (taStipend + raStipend); // net payment
+    }
+
+    // Setters
+    void setTeachingAssistantship(bool hasTA) {
+        hasTeachingAssistantship = hasTA;
+    }
+
+    void setResearchAssistantship(bool hasRA) {
+        hasResearchAssistantship = hasRA;
+    }
+
+    // Getters
+    bool getTeachingAssistantship() const {
+        return hasTeachingAssistantship;
+    }
+
+    bool getResearchAssistantship() const {
+        return hasResearchAssistantship;
+    }
+};
+
+
+// AssistantProfessor inherits from Professor
+class AssistantProfessor : public Professor {
+    bool isTenureTrack;
+    int publications;
+
+public:
+    AssistantProfessor(const string& name, const string& ID, int contact_info, int age,
+                       const string& department, const string& specialization, const string& hire_date,
+                       bool isTenureTrack, int publications)
+        : Professor(name, ID, contact_info, age, department, specialization, hire_date),
+          isTenureTrack(isTenureTrack), publications(publications) {}
+
+    void displayDetails() const override {
+        Professor::displayDetails();
+        cout << "Tenure Track: " << (isTenureTrack ? "Yes" : "No")
+             << "\nPublications: " << publications << endl;
+    }
+
+    double calculatePayment() const override {
+    double baseSalary = 70000;
+    double publicationBonus = publications * 500;
+    double serviceBonus = calculateYearsOfService(getHireDate()) * 800;
+    double total = baseSalary + publicationBonus + serviceBonus;
+    return total;
+}
+
+};
+
+// AssociateProfessor inherits from Professor
+class AssociateProfessor : public Professor {
+    bool hasTenure;
+    int researchGrants;
+
+public:
+    AssociateProfessor(const string& name, const string& ID, int contact_info, int age,
+                       const string& department, const string& specialization, const string& hire_date,
+                       bool hasTenure, int researchGrants)
+        : Professor(name, ID, contact_info, age, department, specialization, hire_date),
+          hasTenure(hasTenure), researchGrants(researchGrants) {}
+
+    void displayDetails() const override {
+        Professor::displayDetails();
+        cout << "Tenure: " << (hasTenure ? "Yes" : "No")
+             << "\nResearch Grants: " << researchGrants << endl;
+    }
+
+    double calculatePayment() const override {
+    double baseSalary = 90000;
+    double grantBonus = researchGrants * 1000;
+    double serviceBonus = calculateYearsOfService(getHireDate()) * 1000;
+    double total = baseSalary + grantBonus + serviceBonus;
+    return total;
+}
+};
+
+// FullProfessor inherits from Professor
+class FullProfessor : public Professor {
+    int yearsOfExperience;
+    int numberOfBooksPublished;
+
+public:
+    FullProfessor(const string& name, const string& ID, int contact_info, int age,
+                  const string& department, const string& specialization, const string& hire_date,
+                  int yearsOfExperience, int numberOfBooksPublished)
+        : Professor(name, ID, contact_info, age, department, specialization, hire_date),
+          yearsOfExperience(yearsOfExperience), numberOfBooksPublished(numberOfBooksPublished) {}
+
+    void displayDetails() const override {
+        Professor::displayDetails();
+        cout << "Years of Experience: " << yearsOfExperience
+             << "\nBooks Published: " << numberOfBooksPublished << endl;
+    }
+
+    double calculatePayment() const override {
+    double baseSalary = 110000;
+    double experienceBonus = yearsOfExperience * 1000;
+    double bookBonus = numberOfBooksPublished * 2000;
+    double serviceBonus = calculateYearsOfService(getHireDate()) * 1200;
+    double total = baseSalary + experienceBonus + bookBonus + serviceBonus;
+    return total;
+}
+
+};
+
+class University {
+    string universityName;
+    vector<Department> departments; // 1. Contains multiple Department objects
+
+public:
+    University(const string& name) : universityName(name) {}
+
+    // 2. Method to add a department
+    void addDepartment(const Department& dept) {
+        departments.push_back(dept);
+    }
+
+    // 2. Method to remove a department by name
+    bool removeDepartment(const string& deptName) {
+        for (auto it = departments.begin(); it != departments.end(); ++it) {
+            if (it->getName() == deptName) {
+                departments.erase(it);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // 3. Retrieve all professors across departments
+    vector<Professor> getAllProfessors() const {
+        vector<Professor> allProfessors;
+        for (const auto& dept : departments) {
+            const vector<Professor>& profs = dept.getProfessors();
+            allProfessors.insert(allProfessors.end(), profs.begin(), profs.end());
+        }
+        return allProfessors;
+    }
+
+    // 3. Retrieve all courses taught by professors in all departments
+    vector<Course*> getAllCourses(const vector<Student*>& students) const {
+        vector<Course*> allCourses;
+        for (const auto& student : students) {
+            vector<Course*> scourses = student->getCourses();
+            for (Course* c : scourses) {
+                if (c && find(allCourses.begin(), allCourses.end(), c) == allCourses.end()) {
+                    allCourses.push_back(c);
+                }
+            }
+        }
+        return allCourses;
+    }
+
+    string getUniversityName() const {
+        return universityName;
+    }
+
+    vector<Department>& getDepartments() {
+        return departments;
+    }
+};
+
+class Classroom {
+    string roomNumber;
+    int capacity;
+    string building;
+
+public:
+    Classroom(const string& roomNumber, int capacity, const string& building)
+    : roomNumber(roomNumber), capacity(capacity), building(building) {}
+
+    // Getters
+    string getRoomNumber() const { return roomNumber; }
+    int getCapacity() const { return capacity; }
+    string getBuilding() const { return building; }
+
+    // Setters
+    bool setCapacity(int newCapacity) {
+        if (newCapacity <= 0) return false;
+        capacity = newCapacity;
+        return true;
+    }
+
+    bool setRoomNumber(const string& newNumber) {
+        if (newNumber.empty()) return false;
+        roomNumber = newNumber;
+        return true;
+    }
+};
+
+class Schedule {
+    struct Slot {
+        string courseCode;
+        string roomNumber;
+        string timeSlot; // e.g., "Monday 10:00AM - 12:00PM"
+    };
+
+    vector<Slot> scheduleEntries;
+
+public:
+    // Add new schedule entry
+    bool addSlot(const string& courseCode, const string& roomNumber, const string& timeSlot) {
+        if (courseCode.empty() || roomNumber.empty() || timeSlot.empty()) return false;
+        // Optional: Prevent overlap by checking for same room and time
+        for (const auto& entry : scheduleEntries) {
+            if (entry.roomNumber == roomNumber && entry.timeSlot == timeSlot) {
+                return false; // Room already booked
+            }
+        }
+        scheduleEntries.push_back({courseCode, roomNumber, timeSlot});
+        return true;
+    }
+
+    // View all schedule entries
+    void displaySchedule() const {
+        for (const auto& entry : scheduleEntries) {
+            cout << "Course: " << entry.courseCode
+                 << ", Room: " << entry.roomNumber
+                 << ", Time: " << entry.timeSlot << endl;
+        }
+    }
+
+    // Get schedule for a specific course
+    vector<string> getCourseSchedule(const string& courseCode) const {
+        vector<string> result;
+        for (const auto& entry : scheduleEntries) {
+            if (entry.courseCode == courseCode) {
+                result.push_back(entry.timeSlot + " in Room " + entry.roomNumber);
+            }
+        }
+        return result;
+    }
+};
+
+//Method outside the classes for calculating the years of service for the overriding function CalculatePayment() in child professor classes
+int calculateYearsOfService(const string& hireDate) {
+    int hireYear = stoi(hireDate.substr(0, 4)); // Extract year
+    int currentYear = 2025; // Replace with dynamic year logic if needed
+    return max(0, currentYear - hireYear);
+}
+
+
+
+
+
+/* The main function and user display is in the final code (This code only meets the assignment third’s requirements of implementing inheritance hierarchies
+and establishing relationships between classes.*/
+ 

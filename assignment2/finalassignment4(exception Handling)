@@ -1,0 +1,231 @@
+#include <iostream>
+#include <map>
+#include <vector>
+#include <stdexcept>
+#include <fstream>
+using namespace std;
+
+// ----------- Custom Exception Classes -----------
+class UniversitySystemException : public exception {
+protected:
+    string message;
+public:
+    UniversitySystemException(string msg) : message(msg) {}
+    const char* what() const noexcept override { return message.c_str(); }
+};
+
+class EnrollmentException : public UniversitySystemException {
+public:
+    EnrollmentException(string msg) : UniversitySystemException("Enrollment Error: " + msg) {}
+};
+
+class GradeException : public UniversitySystemException {
+public:
+    GradeException(string msg) : UniversitySystemException("Grade Error: " + msg) {}
+};
+
+class PaymentException : public UniversitySystemException {
+public:
+    PaymentException(string msg) : UniversitySystemException("Payment Error: " + msg) {}
+};
+
+// ----------- Basic Entities -----------
+class Person {
+protected:
+    string name, id;
+    int age;
+
+public:
+    Person(string n, int a, string i) : name(n), age(a), id(i) {
+        if (id.empty()) throw UniversitySystemException("Invalid ID");
+    }
+
+    virtual void displayDetails() const {
+        cout << "Name: " << name << ", Age: " << age << ", ID: " << id << endl;
+    }
+
+    virtual double calculatePayment() const { return 0.0; }
+    virtual ~Person() {}
+};
+
+class Student : public Person {
+    string program;
+public:
+    Student(string n, int a, string i, string prog) : Person(n, a, i), program(prog) {}
+
+    void displayDetails() const override {
+        Person::displayDetails();
+        cout << "Program: " << program << endl;
+    }
+
+    double calculatePayment() const override {
+        if (program.empty()) throw PaymentException("Missing program info");
+        return 50000;
+    }
+};
+
+class Professor : public Person {
+    double baseSalary;
+public:
+    Professor(string n, int a, string i, double salary)
+        : Person(n, a, i), baseSalary(salary) {}
+
+    void displayDetails() const override {
+        Person::displayDetails();
+        cout << "Base Salary: " << baseSalary << endl;
+    }
+
+    double calculatePayment() const override {
+        if (baseSalary <= 0) throw PaymentException("Invalid salary");
+        return baseSalary;
+    }
+};
+
+// ----------- GradeBook with Exceptions -----------
+class GradeBook {
+    map<string, float> grades;
+
+public:
+    void addGrade(string studentID, float grade) {
+        if (grade < 0 || grade > 100)
+            throw GradeException("Grade must be between 0 and 100");
+        grades[studentID] = grade;
+    }
+
+    void finalizeGrades() {
+        for (auto& pair : grades) {
+            if (pair.second < 0)
+                throw GradeException("Cannot finalize incomplete grades");
+        }
+    }
+
+    void printGrades() const {
+        for (const auto& pair : grades)
+            cout << "Student ID: " << pair.first << ", Grade: " << pair.second << endl;
+    }
+};
+
+// ----------- Enrollment Manager with Exceptions -----------
+class EnrollmentManager {
+    map<string, vector<string>> courseEnrollments;
+
+public:
+    void enrollStudent(string course, string studentID) {
+        if (courseEnrollments[course].size() >= 2)
+            throw EnrollmentException("Course full");
+        courseEnrollments[course].push_back(studentID);
+    }
+
+    void dropStudent(string course, string studentID) {
+        auto& students = courseEnrollments[course];
+        auto it = find(students.begin(), students.end(), studentID);
+        if (it == students.end())
+            throw EnrollmentException("Student not enrolled in course");
+        students.erase(it);
+    }
+
+    void printEnrollment(string course) const {
+        auto it = courseEnrollments.find(course);
+        if (it == courseEnrollments.end()) {
+            cout << "No enrollments for course: " << course << endl;
+            return;
+        }
+        cout << "Enrolled in " << course << ": ";
+        for (auto& id : it->second) cout << id << " ";
+        cout << endl;
+    }
+};
+
+// ----------- Integrated University System -----------
+class UniversitySystem {
+    vector<Student> students;
+    vector<Professor> professors;
+    EnrollmentManager enrollManager;
+    GradeBook gradeBook;
+
+public:
+    void addStudent(const Student& s) { students.push_back(s); }
+    void addProfessor(const Professor& p) { professors.push_back(p); }
+
+    void enrollStudent(string course, string studentID) {
+        enrollManager.enrollStudent(course, studentID);
+    }
+
+    void assignGrade(string studentID, float grade) {
+        gradeBook.addGrade(studentID, grade);
+    }
+
+    void calculatePayments() {
+        for (auto& s : students)
+            cout << s.getID() << " Payment: " << s.calculatePayment() << endl;
+        for (auto& p : professors)
+            cout << p.getID() << " Payment: " << p.calculatePayment() << endl;
+    }
+
+    void generateReports() {
+        cout << "\n--- Students ---\n";
+        for (auto& s : students) s.displayDetails();
+
+        cout << "\n--- Professors ---\n";
+        for (auto& p : professors) p.displayDetails();
+
+        cout << "\n--- Grades ---\n";
+        gradeBook.printGrades();
+    }
+
+    void logException(const string& message) {
+        ofstream log("error_log.txt", ios::app);
+        log << message << endl;
+    }
+
+    void runMenu() {
+        int choice;
+        do {
+            cout << "\n--- University System Menu ---\n"
+                 << "1. Add Student\n2. Add Professor\n3. Enroll Student\n"
+                 << "4. Assign Grade\n5. Show Report\n6. Exit\nChoice: ";
+            cin >> choice;
+            try {
+                if (choice == 1) {
+                    string name, id, prog;
+                    int age;
+                    cout << "Enter name, age, ID, program: ";
+                    cin >> name >> age >> id >> prog;
+                    addStudent(Student(name, age, id, prog));
+                } else if (choice == 2) {
+                    string name, id;
+                    int age;
+                    double salary;
+                    cout << "Enter name, age, ID, salary: ";
+                    cin >> name >> age >> id >> salary;
+                    addProfessor(Professor(name, age, id, salary));
+                } else if (choice == 3) {
+                    string course, studentID;
+                    cout << "Enter course and student ID: ";
+                    cin >> course >> studentID;
+                    enrollStudent(course, studentID);
+                } else if (choice == 4) {
+                    string studentID;
+                    float grade;
+                    cout << "Enter student ID and grade: ";
+                    cin >> studentID >> grade;
+                    assignGrade(studentID, grade);
+                } else if (choice == 5) {
+                    generateReports();
+                } else if (choice == 6) {
+                    cout << "Exiting system.\n";
+                    break;
+                }
+            } catch (const UniversitySystemException& ex) {
+                cout << "Exception: " << ex.what() << endl;
+                logException(ex.what());
+            }
+        } while (choice != 6);
+    }
+};
+
+int main() {
+    UniversitySystem system;
+    system.runMenu();
+    return 0;
+}

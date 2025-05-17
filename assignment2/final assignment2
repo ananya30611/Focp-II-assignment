@@ -1,0 +1,267 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <limits>
+using namespace std;
+
+// --------- Person Class (Base) ---------
+class Person {
+protected:
+    string name;
+    int age;
+    string ID;
+    string contact;
+
+public:
+    Person(string n = "", int a = 0, string id = "", string c = "") {
+        setName(n);
+        setAge(a);
+        ID = id;
+        contact = c;
+    }
+
+    virtual ~Person() {}
+
+    void setName(string n) {
+        if (!n.empty()) name = n;
+        else cout << "Invalid name!\n";
+    }
+
+    void setAge(int a) {
+        if (a > 0 && a < 120) age = a;
+        else cout << "Invalid age!\n";
+    }
+
+    void setContact(string c) { contact = c; }
+    void setID(string id) { ID = id; }
+
+    string getName() const { return name; }
+    int getAge() const { return age; }
+    string getID() const { return ID; }
+    string getContact() const { return contact; }
+
+    virtual void displayDetails() const {
+        cout << "Name: " << name << ", Age: " << age << ", ID: " << ID << ", Contact: " << contact << endl;
+    }
+
+    virtual double calculatePayment() const {
+        return 0.0;
+    }
+};
+
+// --------- Student Class ---------
+class Student : public Person {
+    string enrollmentDate;
+    string program;
+    float GPA;
+
+public:
+    Student(string n = "", int a = 0, string id = "", string c = "",
+            string ed = "", string prog = "", float g = 0.0)
+        : Person(n, a, id, c), enrollmentDate(ed), program(prog) {
+        setGPA(g);
+    }
+
+    void setGPA(float g) {
+        if (g >= 0.0 && g <= 4.0) GPA = g;
+        else cout << "Invalid GPA!\n";
+    }
+
+    float getGPA() const { return GPA; }
+
+    void displayDetails() const override {
+        Person::displayDetails();
+        cout << "Enrollment: " << enrollmentDate << ", Program: " << program << ", GPA: " << GPA << endl;
+    }
+
+    double calculatePayment() const override {
+        return 50000; // dummy tuition
+    }
+};
+
+// --------- Professor Class ---------
+class Professor : public Person {
+    string department;
+    string specialization;
+    string hireDate;
+
+public:
+    Professor(string n = "", int a = 0, string id = "", string c = "",
+              string dept = "", string spec = "", string hd = "")
+        : Person(n, a, id, c), department(dept), specialization(spec), hireDate(hd) {}
+
+    void displayDetails() const override {
+        Person::displayDetails();
+        cout << "Department: " << department << ", Specialization: " << specialization
+             << ", Hire Date: " << hireDate << endl;
+    }
+
+    double calculatePayment() const override {
+        return 100000; // dummy salary
+    }
+};
+
+// --------- Course Class ---------
+class Course {
+    string code;
+    string title;
+    int credits;
+    string description;
+
+public:
+    Course(string c = "", string t = "", int cr = 0, string d = "") {
+        setCode(c);
+        setTitle(t);
+        setCredits(cr);
+        setDescription(d);
+    }
+
+    void setCode(string c) { code = c; }
+    void setTitle(string t) { title = t.empty() ? "Untitled" : t; }
+    void setCredits(int cr) {
+        if (cr > 0) credits = cr;
+        else cout << "Invalid credits!\n";
+    }
+    void setDescription(string d) { description = d; }
+
+    void displayCourse() const {
+        cout << "Course: " << title << " (" << code << "), Credits: " << credits
+             << ", Desc: " << description << endl;
+    }
+};
+
+// --------- Department Class ---------
+class Department {
+    string name;
+    string location;
+    double budget;
+
+public:
+    Department(string n = "", string l = "", double b = 0) {
+        name = n;
+        location = l;
+        budget = b;
+    }
+
+    void display() const {
+        cout << "Dept: " << name << ", Location: " << location << ", Budget: " << budget << endl;
+    }
+};
+
+// --------- GradeBook Class ---------
+class GradeBook {
+    map<string, float> studentGrades;
+
+public:
+    void addGrade(string studentID, float grade) {
+        if (grade >= 0 && grade <= 100)
+            studentGrades[studentID] = grade;
+        else
+            cout << "Invalid grade!\n";
+    }
+
+    float calculateAverageGrade() const {
+        float sum = 0;
+        for (auto& pair : studentGrades)
+            sum += pair.second;
+        return studentGrades.empty() ? 0 : sum / studentGrades.size();
+    }
+
+    float getHighestGrade() const {
+        float maxGrade = 0;
+        for (auto& pair : studentGrades)
+            if (pair.second > maxGrade)
+                maxGrade = pair.second;
+        return maxGrade;
+    }
+
+    vector<string> getFailingStudents() const {
+        vector<string> failing;
+        for (auto& pair : studentGrades)
+            if (pair.second < 40)
+                failing.push_back(pair.first);
+        return failing;
+    }
+};
+
+// --------- EnrollmentManager Class ---------
+class EnrollmentManager {
+    map<string, vector<string>> enrollments;
+
+public:
+    void enrollStudent(string courseCode, string studentID) {
+        enrollments[courseCode].push_back(studentID);
+    }
+
+    void dropStudent(string courseCode, string studentID) {
+        auto& students = enrollments[courseCode];
+        students.erase(remove(students.begin(), students.end(), studentID), students.end());
+    }
+
+    int getEnrollmentCount(string courseCode) const {
+        auto it = enrollments.find(courseCode);
+        return it != enrollments.end() ? it->second.size() : 0;
+    }
+};
+
+// --------- Main/Test Function ---------
+int main() {
+    // Create objects
+    Student s1("Alice", 20, "S101", "1234567890", "2023-08-01", "CS", 3.8);
+    Student s2("Bob", 22, "S102", "9876543210", "2022-08-01", "ECE", 2.9);
+
+    Professor p1("Dr. Smith", 45, "P101", "1112223333", "CS", "AI", "2015-06-01");
+    Professor p2("Dr. Johnson", 50, "P102", "4445556666", "Math", "Algebra", "2010-03-15");
+
+    Course c1("CS101", "Intro to Programming", 3, "Basics of C++");
+    Course c2("ECE201", "Circuits", 4, "Analog and Digital");
+
+    Department d1("Computer Science", "Block A", 1000000);
+    Department d2("Electronics", "Block B", 800000);
+
+    // Show data
+    cout << "--- Students ---\n";
+    s1.displayDetails();
+    s2.displayDetails();
+
+    cout << "\n--- Professors ---\n";
+    p1.displayDetails();
+    p2.displayDetails();
+
+    cout << "\n--- Courses ---\n";
+    c1.displayCourse();
+    c2.displayCourse();
+
+    cout << "\n--- Departments ---\n";
+    d1.display();
+    d2.display();
+
+    // Encapsulation example
+    GradeBook gb;
+    gb.addGrade("S101", 85);
+    gb.addGrade("S102", 35);
+
+    cout << "\nAverage Grade: " << gb.calculateAverageGrade() << endl;
+    cout << "Highest Grade: " << gb.getHighestGrade() << endl;
+
+    vector<string> failing = gb.getFailingStudents();
+    cout << "Failing Students: ";
+    for (string id : failing)
+        cout << id << " ";
+    cout << endl;
+
+    EnrollmentManager em;
+    em.enrollStudent("CS101", "S101");
+    em.enrollStudent("CS101", "S102");
+    cout << "CS101 Enrollment Count: " << em.getEnrollmentCount("CS101") << endl;
+
+    // Polymorphism demo
+    cout << "\n--- Polymorphism Demo ---\n";
+    Person* people[4] = {&s1, &s2, &p1, &p2};
+    for (int i = 0; i < 4; ++i) {
+        people[i]->displayDetails();
+        cout << "Payment: " << people[i]->calculatePayment() << endl << endl;
+    }
+
+    return 0;
+}
